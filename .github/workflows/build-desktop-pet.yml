@@ -1,0 +1,110 @@
+name: Build Desktop Pet
+
+on:
+  push:
+    tags:
+      - 'desktop-pet-v*'
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            artifact: "*.dmg"
+          - os: windows-latest
+            platform: win
+            artifact: "*.exe"
+          - os: ubuntu-latest
+            platform: linux
+            artifact: "*.AppImage"
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop-pet
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: desktop-pet/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Electron app
+        run: npm run build
+
+      - name: Package — macOS
+        if: matrix.platform == 'mac'
+        run: npx electron-builder --mac --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package — Windows
+        if: matrix.platform == 'win'
+        run: npx electron-builder --win --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package — Linux
+        if: matrix.platform == 'linux'
+        run: npx electron-builder --linux --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-pet-${{ matrix.platform }}
+          path: |
+            desktop-pet/dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Desktop Pet ${{ github.ref_name }}
+          body: |
+            ## Desktop Pet ${{ github.ref_name }}
+
+            A Clippy-style transparent overlay desktop pet powered by local Qwen LLM via Ollama.
+
+            ### Downloads
+            | Platform | File |
+            |----------|------|
+            | macOS (Apple Silicon + Intel) | `.dmg` |
+            | Windows | `.exe` (NSIS installer) |
+            | Linux | `.AppImage` |
+
+            ### Setup
+            1. Install [Ollama](https://ollama.com)
+            2. Run `ollama pull qwen2.5:3b`
+            3. Install Desktop Pet
+            4. Click the pet to start chatting!
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
