@@ -3,8 +3,8 @@ import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 
 // ── Window dimensions ──────────────────────────────────────────────────────
-const COLLAPSED = { width: 164, height: 184 }
-const EXPANDED  = { width: 440, height: 620 }
+const COLLAPSED = { width: 180, height: 228 }
+const EXPANDED  = { width: 440, height: 660 }
 
 let win: BrowserWindow | null = null
 
