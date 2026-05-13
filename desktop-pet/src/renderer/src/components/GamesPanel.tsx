@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { PetAppearance } from './PetCanvas'
 import RockPaperScissors from './games/RockPaperScissors'
 import CatchGame from './games/CatchGame'
+import SpaceInvaders from './games/SpaceInvaders'
 
-type GameId = null | 'rps' | 'catch'
+type GameId = null | 'rps' | 'catch' | 'si'
 
 interface Props {
   appearance: PetAppearance
@@ -14,6 +15,12 @@ interface Props {
 export default function GamesPanel({ appearance, petName, onClose }: Props) {
   const [activeGame, setActiveGame] = useState<GameId>(null)
 
+  const titles: Record<NonNullable<GameId>, string> = {
+    rps:   '🪨 Rock Paper Scissors',
+    catch: '🎯 Catch!',
+    si:    '👾 Space Invaders',
+  }
+
   return (
     <div className="games-panel">
       <div className="chat-header">
@@ -22,9 +29,7 @@ export default function GamesPanel({ appearance, petName, onClose }: Props) {
             <button className="icon-btn" onClick={() => setActiveGame(null)}>←</button>
           )}
           <span className="panel-title">
-            {activeGame === 'rps'   ? '🪨 Rock Paper Scissors'
-           : activeGame === 'catch' ? '🎯 Catch!'
-           : '🎮 Games'}
+            {activeGame ? titles[activeGame] : '🎮 Games'}
           </span>
         </div>
         <button className="icon-btn close-btn" onClick={onClose}>✕</button>
@@ -43,11 +48,17 @@ export default function GamesPanel({ appearance, petName, onClose }: Props) {
               <span className="game-card-title">Catch!</span>
               <span className="game-card-desc">Click the bouncing ball. 30 seconds!</span>
             </button>
+            <button className="game-card" onClick={() => setActiveGame('si')}>
+              <span className="game-card-icon">👾</span>
+              <span className="game-card-title">Space Invaders</span>
+              <span className="game-card-desc">Defend {petName} from the alien horde!</span>
+            </button>
           </div>
         )}
 
         {activeGame === 'rps'   && <RockPaperScissors appearance={appearance} petName={petName} />}
         {activeGame === 'catch' && <CatchGame         appearance={appearance} petName={petName} />}
+        {activeGame === 'si'    && <SpaceInvaders     appearance={appearance} petName={petName} />}
       </div>
     </div>
   )

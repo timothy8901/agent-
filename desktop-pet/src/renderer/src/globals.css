@@ -614,3 +614,87 @@ html, body, #root {
 }
 .vision-reaction-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
 .vision-reaction p { font-size: 13px; color: #ddd; line-height: 1.5; }
+
+/* ── Space Invaders ───────────────────────────────────────────────────── */
+.game-si {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  width: 100%;
+}
+
+.si-hud {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 4px 12px 2px;
+}
+.si-hud-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 64px;
+}
+.si-hud-val {
+  font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700;
+  color: #0f0; letter-spacing: 0.05em;
+  text-shadow: 0 0 8px rgba(0,255,0,0.6);
+}
+.si-wave-num { color: #0ff; text-shadow: 0 0 8px rgba(0,255,255,0.6); }
+.si-hud-lbl {
+  font-size: 9px; letter-spacing: 0.12em; color: #555;
+  font-family: 'Courier New', monospace; text-transform: uppercase;
+}
+
+.si-lives {
+  display: flex; gap: 6px; padding: 2px 0 4px;
+  font-size: 13px;
+}
+.si-ship-icon { transition: opacity 0.2s; }
+.si-ship-icon.alive { color: #0f0; text-shadow: 0 0 6px rgba(0,255,0,0.7); }
+.si-ship-icon.dead  { color: #222; }
+
+.si-canvas-wrap {
+  position: relative; line-height: 0;
+  border: 1px solid rgba(0,255,0,0.15);
+  border-radius: 4px; overflow: hidden;
+}
+.si-canvas { display: block; image-rendering: pixelated; }
+
+.si-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px;
+  background: rgba(0,8,20,0.88);
+}
+.si-big-title {
+  font-family: 'Courier New', monospace; font-size: 22px; font-weight: 900;
+  color: #0f0; letter-spacing: 0.15em;
+  text-shadow: 0 0 16px rgba(0,255,0,0.8);
+  animation: si-flicker 3s infinite;
+}
+@keyframes si-flicker {
+  0%,94%,96%,100% { opacity: 1; }
+  95% { opacity: 0.4; }
+}
+.si-sub {
+  font-size: 12px; color: #aaa; font-family: 'Courier New', monospace;
+  text-align: center; max-width: 240px;
+}
+.si-key-hint {
+  font-size: 10px; color: #555; font-family: 'Courier New', monospace;
+  letter-spacing: 0.08em;
+}
+.si-final {
+  font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700;
+  color: #ff0; text-shadow: 0 0 10px rgba(255,255,0,0.6);
+}
+
+.si-btn-row {
+  display: flex; gap: 8px; padding: 6px 0 0;
+}
+.si-ctrl-btn {
+  background: rgba(0,255,0,0.08); border: 1px solid rgba(0,255,0,0.25);
+  border-radius: 8px; color: #0f0; font-size: 16px;
+  width: 52px; height: 36px; cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: background 0.1s, transform 0.05s;
+  display: flex; align-items: center; justify-content: center;
+  touch-action: none;
+}
+.si-ctrl-btn:active { background: rgba(0,255,0,0.2); transform: scale(0.94); }
+.si-fire-btn { width: 90px; background: rgba(255,68,0,0.12); border-color: rgba(255,68,0,0.35); color: #ff6622; }
+.si-fire-btn:active { background: rgba(255,68,0,0.28); }
