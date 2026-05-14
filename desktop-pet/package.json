@@ -1,6 +1,6 @@
 {
   "name": "desktop-pet",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Clippy-style desktop overlay pet powered by local LLM (Ollama/Qwen)",
   "main": "out/main/index.js",
   "scripts": {
