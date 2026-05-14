@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 
-export type PetAnim = 'IDLE' | 'WAVING' | 'HAPPY' | 'TALKING' | 'SLEEPING' | 'THINKING'
+export type PetAnim = 'IDLE' | 'WAVING' | 'HAPPY' | 'TALKING' | 'SLEEPING' | 'THINKING' | 'EATING'
 
 export interface PetAppearance {
   colorIndex: number
@@ -96,6 +96,25 @@ const BODY_WAVING: number[][] = [
   [0,1,0,1,0,0,0,1,0,1,0],
   [0,0,1,0,0,0,0,0,1,0,0],
 ]
+const BODY_EATING_A: number[][] = [
+  [0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,0,0,0,1,1,1,1], // arms bent up holding bowl
+  [0,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,1,1,1,1,1,1,1],
+  [0,1,1,1,1,1,1,1,1,1,0],
+  [0,1,0,1,0,0,0,1,0,1,0],
+  [0,0,1,0,0,0,0,0,1,0,0],
+]
+const BODY_EATING_B: number[][] = [
+  [0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],
+  [1,0,1,1,1,0,0,0,1,1,1], // right arm raised higher (lifting to mouth)
+  [0,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,1,1,1,1,1,1,1],
+  [0,1,1,1,1,1,1,1,1,1,0],
+  [0,0,0,1,0,0,0,1,0,0,0],
+  [1,0,1,0,0,0,0,0,1,0,1],
+]
+
 const BODY_THINKING: number[][] = [
   [0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],
   [0,1,1,1,1,1,1,1,1,1,0],
@@ -153,6 +172,7 @@ export default function PetCanvas({
         case 'WAVING':   body = frame % 2 ? BODY_A : BODY_WAVING; break
         case 'TALKING':  body = frame % 2 ? BODY_A : BODY_TALKING_OPEN; break
         case 'THINKING': body = BODY_THINKING; break
+        case 'EATING':   body = frame % 2 ? BODY_EATING_B : BODY_EATING_A; break
         default:         body = frame % 2 ? BODY_B : BODY_A
       }
 

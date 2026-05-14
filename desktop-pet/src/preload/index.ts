@@ -19,5 +19,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Context menu
   showContextMenu: () =>
-    ipcRenderer.send('show-context-menu')
+    ipcRenderer.send('show-context-menu'),
+
+  // Screen capture (returns data URL string or null)
+  captureScreen: (): Promise<string | null> =>
+    ipcRenderer.invoke('capture-screen'),
 })

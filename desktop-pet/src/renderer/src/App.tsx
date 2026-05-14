@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import PetCanvas         from './components/PetCanvas'
-import ChatBubble        from './components/ChatBubble'
-import SettingsPanel     from './components/SettingsPanel'
+import PetCanvas          from './components/PetCanvas'
+import ChatBubble         from './components/ChatBubble'
+import SettingsPanel      from './components/SettingsPanel'
 import CustomizationPanel from './components/CustomizationPanel'
-import GamesPanel        from './components/GamesPanel'
-import { useOllama }     from './hooks/useOllama'
+import GamesPanel         from './components/GamesPanel'
+import { useOllama }      from './hooks/useOllama'
 import { usePetAppearance } from './hooks/usePetAppearance'
-import { useVision }     from './hooks/useVision'
-import type { PetAnim }  from './components/PetCanvas'
+import { useVision }      from './hooks/useVision'
+import { useVoice }       from './hooks/useVoice'
+import { useScreenContext, type ScreenContextType } from './hooks/useScreenContext'
+import type { PetAnim }   from './components/PetCanvas'
 
 declare global {
   interface Window {
@@ -18,18 +20,27 @@ declare global {
       dragMove:   (pos: { mouseX: number; mouseY: number }) => void
       dragEnd:    () => void
       showContextMenu: () => void
+      captureScreen:   () => Promise<string | null>
     }
   }
 }
 
 type Panel = null | 'chat' | 'customize' | 'games' | 'vision'
 
+const SCREEN_REACTIONS: Record<ScreenContextType, { anim: PetAnim; msg: string } | null> = {
+  video:   { anim: 'EATING',   msg: "Ooh, what are we watching? 🍿 Scoot over!" },
+  coding:  { anim: 'THINKING', msg: "Deep work mode detected. I'll stay quiet 🤫" },
+  gaming:  { anim: 'HAPPY',    msg: "GAME TIME! Let's GOOO! 🎮" },
+  email:   { anim: 'WAVING',   msg: "Writing emails? I can help draft one — just ask!" },
+  unknown: null,
+}
+
 export default function App() {
-  const [panel,       setPanel]       = useState<Panel>(null)
+  const [panel,        setPanel]        = useState<Panel>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [petAnim,     setPetAnim]     = useState<PetAnim>('IDLE')
-  const [editingName, setEditingName] = useState(false)
-  const [nameInput,   setNameInput]   = useState('')
+  const [petAnim,      setPetAnim]      = useState<PetAnim>('IDLE')
+  const [editingName,  setEditingName]  = useState(false)
+  const [nameInput,    setNameInput]    = useState('')
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -40,6 +51,7 @@ export default function App() {
 
   const { appearance, petName, setColor, setFace, setEar, setPetName } = usePetAppearance()
 
+  // ── Motion / camera ────────────────────────────────────────────────────
   const handleMotion = useCallback(() => {
     if (petAnim === 'IDLE' || petAnim === 'SLEEPING') {
       setPetAnim('WAVING')
@@ -51,7 +63,48 @@ export default function App() {
     settings.baseUrl, handleMotion
   )
 
-  // ── Sync anim with LLM state ──────────────────────────────────────────
+  // ── Voice I/O ──────────────────────────────────────────────────────────
+  const voice = useVoice(useCallback((text: string) => {
+    send(text)
+  }, [send]))
+
+  // Speak assistant replies when TTS enabled
+  const lastMsgCount = useRef(messages.length)
+  useEffect(() => {
+    if (messages.length > lastMsgCount.current) {
+      const last = messages[messages.length - 1]
+      if (last.role === 'assistant' && !streaming) {
+        setPetAnim('HAPPY')
+        const t = setTimeout(() => setPetAnim('IDLE'), 1800)
+        lastMsgCount.current = messages.length
+        if (voice.state.ttsEnabled) voice.speak(last.content)
+        return () => clearTimeout(t)
+      }
+    }
+    lastMsgCount.current = messages.length
+    return undefined
+  }, [messages, streaming, voice.state.ttsEnabled])
+
+  // ── Screen context ─────────────────────────────────────────────────────
+  const [screenWatching, setScreenWatching] = useState(false)
+  const screenCtx = useScreenContext(settings.baseUrl)
+
+  useEffect(() => {
+    if (screenWatching) screenCtx.start()
+    else screenCtx.stop()
+  }, [screenWatching])
+
+  // React when screen context changes
+  useEffect(() => {
+    const reaction = SCREEN_REACTIONS[screenCtx.state.context]
+    if (!reaction || !screenCtx.state.active) return
+    setPetAnim(reaction.anim)
+    setTimeout(() => setPetAnim('IDLE'), 4000)
+    // Inject as chat message (will auto-send to LLM if chat open)
+    if (panel === 'chat') send(`[Screen]: ${reaction.msg}`)
+  }, [screenCtx.state.context])
+
+  // ── Sync anim with LLM ────────────────────────────────────────────────
   useEffect(() => {
     if (streaming) { setPetAnim('TALKING'); return }
     if (panel === 'chat') {
@@ -62,23 +115,7 @@ export default function App() {
     return undefined
   }, [streaming, panel])
 
-  // Happy bounce after each reply
-  const lastMsgCount = useRef(messages.length)
-  useEffect(() => {
-    if (messages.length > lastMsgCount.current) {
-      const last = messages[messages.length - 1]
-      if (last.role === 'assistant' && !streaming) {
-        setPetAnim('HAPPY')
-        const t = setTimeout(() => setPetAnim('IDLE'), 1800)
-        lastMsgCount.current = messages.length
-        return () => clearTimeout(t)
-      }
-    }
-    lastMsgCount.current = messages.length
-    return undefined
-  }, [messages, streaming])
-
-  // Expand window when any panel opens
+  // ── Expand / collapse ─────────────────────────────────────────────────
   useEffect(() => {
     window.electronAPI.setExpanded(panel !== null)
     if (panel === 'chat') checkOllama()
@@ -86,10 +123,9 @@ export default function App() {
     if (panel !== 'vision' && vision.active) stopCamera()
   }, [panel])
 
-  // Vision reaction in chat
+  // ── Vision → chat ─────────────────────────────────────────────────────
   useEffect(() => {
     if (vision.lastReaction && panel === 'chat') {
-      // inject vision reaction as message (pet "says" what it saw)
       send(`[Vision reaction]: ${vision.lastReaction}`)
     }
   }, [vision.lastReaction])
@@ -142,12 +178,10 @@ export default function App() {
     setEditingName(true)
     setTimeout(() => nameInputRef.current?.select(), 30)
   }
-
   function commitName() {
     if (nameInput.trim()) setPetName(nameInput)
     setEditingName(false)
   }
-
   function onNameKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter') commitName()
     if (e.key === 'Escape') setEditingName(false)
@@ -162,7 +196,7 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {/* ── Overlay panel area ──────────────────────────────── */}
+      {/* ── Overlay panel area ───────────────────────────────── */}
       {panel !== null && !settingsOpen && (
         <div className="overlay-area" data-interactive="">
           {panel === 'chat' && (
@@ -173,6 +207,13 @@ export default function App() {
               onClose={() => setPanel(null)}
               onClearHistory={clearHistory}
               onOpenSettings={() => setSettingsOpen(true)}
+              listening={voice.state.listening}
+              speaking={voice.state.speaking}
+              voiceSupported={voice.state.supported}
+              ttsEnabled={voice.state.ttsEnabled}
+              onMicDown={voice.startListening}
+              onMicUp={voice.stopListening}
+              onToggleTts={voice.toggleTts}
             />
           )}
           {panel === 'customize' && (
@@ -210,7 +251,6 @@ export default function App() {
 
       {/* ── Pet area ─────────────────────────────────────────── */}
       <div className="pet-area" data-interactive="">
-        {/* Pet canvas — click/drag */}
         <div
           className="pet-canvas-wrap"
           onMouseDown={onPetMouseDown}
@@ -219,7 +259,6 @@ export default function App() {
         >
           <PetCanvas anim={petAnim} appearance={appearance} size={150} />
 
-          {/* Motion bar (only when vision active) */}
           {vision.active && panel !== 'vision' && (
             <div
               className="motion-bar"
@@ -250,26 +289,21 @@ export default function App() {
 
         {/* Toolbar */}
         <div className="pet-toolbar" data-interactive="">
-          <ToolBtn
-            icon="💬" label="Chat"
-            active={activeToolbar.chat}
-            onClick={() => togglePanel('chat')}
-          />
-          <ToolBtn
-            icon="🎮" label="Games"
-            active={activeToolbar.games}
-            onClick={() => togglePanel('games')}
-          />
-          <ToolBtn
-            icon="🎨" label="Style"
-            active={activeToolbar.customize}
-            onClick={() => togglePanel('customize')}
-          />
+          <ToolBtn icon="💬" label="Chat"    active={activeToolbar.chat}      onClick={() => togglePanel('chat')} />
+          <ToolBtn icon="🎮" label="Games"   active={activeToolbar.games}     onClick={() => togglePanel('games')} />
+          <ToolBtn icon="🎨" label="Style"   active={activeToolbar.customize} onClick={() => togglePanel('customize')} />
           <ToolBtn
             icon={vision.active ? '📷' : '📸'} label="Vision"
             active={activeToolbar.vision}
             onClick={() => togglePanel('vision')}
             dot={vision.active}
+          />
+          <ToolBtn
+            icon="🖥" label="Screen"
+            active={screenWatching}
+            onClick={() => setScreenWatching(w => !w)}
+            dot={screenWatching}
+            loading={screenCtx.state.isAnalyzing}
           />
         </div>
       </div>
@@ -278,17 +312,19 @@ export default function App() {
 }
 
 // ── Toolbar button ────────────────────────────────────────────────────────
-function ToolBtn({ icon, label, active, dot, onClick }: {
-  icon: string; label: string; active: boolean; dot?: boolean; onClick: () => void
+function ToolBtn({ icon, label, active, dot, loading, onClick }: {
+  icon: string; label: string; active: boolean
+  dot?: boolean; loading?: boolean; onClick: () => void
 }) {
   return (
     <button
-      className={`tool-btn ${active ? 'active' : ''}`}
+      className={`tool-btn ${active ? 'active' : ''} ${loading ? 'loading' : ''}`}
       onClick={onClick}
       title={label}
     >
       <span className="tool-icon">{icon}</span>
-      {dot && <span className="tool-dot" />}
+      {dot && !loading && <span className="tool-dot" />}
+      {loading && <span className="tool-dot loading-dot" />}
     </button>
   )
 }
@@ -315,7 +351,6 @@ function VisionPanel({ vision, petName, onAnalyze, onClose }: {
           </div>
         ) : (
           <>
-            {/* Motion meter */}
             <div className="vision-motion-wrap">
               <div className="vision-motion-label">
                 Motion detector
@@ -333,19 +368,12 @@ function VisionPanel({ vision, petName, onAnalyze, onClose }: {
                 />
               </div>
               <p className="vision-hint">
-                {vision.motionLevel > 30
-                  ? `${petName} sees you! 👀`
+                {vision.motionLevel > 30 ? `${petName} sees you! 👀`
                   : `Wave at your screen — ${petName} will wave back!`}
               </p>
             </div>
-
-            {/* AI vision */}
             <div className="vision-ai-section">
-              <button
-                className="vision-snap-btn"
-                onClick={onAnalyze}
-                disabled={vision.isAnalyzing}
-              >
+              <button className="vision-snap-btn" onClick={onAnalyze} disabled={vision.isAnalyzing}>
                 {vision.isAnalyzing ? '🔍 Analyzing…' : `📸 Let ${petName} see you`}
               </button>
               {vision.lastReaction && (
@@ -355,8 +383,7 @@ function VisionPanel({ vision, petName, onAnalyze, onClose }: {
                 </div>
               )}
               <p className="vision-hint">
-                Needs a vision model in Ollama:<br />
-                <code>ollama pull moondream</code>
+                Needs a vision model:<br /><code>ollama pull moondream</code>
               </p>
             </div>
           </>
