@@ -2,15 +2,15 @@ import { useEffect, useRef, useState, KeyboardEvent } from 'react'
 import type { Message, OllamaSettings } from '../hooks/useOllama'
 
 interface Props {
-  messages: Message[]
-  streaming: boolean
+  messages:     Message[]
+  streaming:    boolean
   ollamaOnline: boolean | null
-  onSend: (text: string) => void
-  onStop: () => void
-  onClose: () => void
+  onSend:       (text: string) => void
+  onStop:       () => void
+  onClose:      () => void
   onClearHistory: () => void
   onOpenSettings: () => void
-  settings: OllamaSettings
+  settings:     OllamaSettings
 }
 
 export default function ChatBubble({
@@ -18,24 +18,15 @@ export default function ChatBubble({
   onSend, onStop, onClose, onClearHistory, onOpenSettings, settings
 }: Props) {
   const [input, setInput] = useState('')
-  const endRef    = useRef<HTMLDivElement>(null)
-  const inputRef  = useRef<HTMLTextAreaElement>(null)
+  const endRef   = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      submit()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() }
   }
-
   function submit() {
     const text = input.trim()
     if (!text || streaming) return
@@ -43,42 +34,36 @@ export default function ChatBubble({
     onSend(text)
   }
 
-  // Minimal markdown → HTML (code blocks, inline code, bold, italic, lists)
+  // Minimal markdown → HTML
   function renderMarkdown(text: string): string {
-    let html = text
-      // Escape HTML entities first
+    const html = text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      // Fenced code blocks
       .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
         `<pre class="code-block" data-lang="${lang}"><code>${code.trimEnd()}</code></pre>`)
-      // Inline code
       .replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>')
-      // Bold
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      // Italic
       .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
-      // Unordered lists
       .replace(/^[*\-] (.+)$/gm, '<li>$1</li>')
       .replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>')
-      // Ordered lists
       .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-      // Headers
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
       .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      // Paragraphs: double newline → break
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>')
-
     return `<p>${html}</p>`
   }
 
+  const isOffline = ollamaOnline === false
+
   const statusColor = ollamaOnline === null ? '#888' : ollamaOnline ? '#4CAF50' : '#ef5350'
-  const statusText  = ollamaOnline === null ? 'checking…' : ollamaOnline ? settings.model : 'Ollama offline'
+  const statusText  = ollamaOnline === null ? 'Checking…'
+    : ollamaOnline ? settings.model
+    : 'AI not running'
 
   return (
     <div className="chat-bubble">
-      {/* ── Header ─────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="chat-header">
         <div className="status-pill">
           <span className="status-dot" style={{ background: statusColor }} />
@@ -91,18 +76,24 @@ export default function ChatBubble({
         </div>
       </div>
 
-      {/* ── Messages ───────────────────────────────────────────── */}
+      {/* ── Offline onboarding ───────────────────────────────────────── */}
+      {isOffline && (
+        <div className="onboarding-banner">
+          <p className="onboard-title">👋 Let's get started!</p>
+          <p className="onboard-step"><strong>Step 1.</strong> Download &amp; install Ollama (free):</p>
+          <p className="onboard-step"><strong>Step 2.</strong> Open Terminal and type:</p>
+          <div className="onboard-code">ollama pull qwen3:latest</div>
+          <p className="onboard-step"><strong>Step 3.</strong> Leave Terminal open, then chat here!</p>
+          <p className="onboard-hint">Need help? Click ⚙ to change the AI model.</p>
+        </div>
+      )}
+
+      {/* ── Messages ─────────────────────────────────────────────────── */}
       <div className="messages-list">
-        {messages.length === 0 && (
+        {messages.length === 0 && !isOffline && (
           <div className="empty-state">
-            <span>👋 Hi! I'm Igachi.</span>
+            <span>👋 Hi! I'm your desktop companion.</span>
             <span>Ask me anything!</span>
-            {!ollamaOnline && (
-              <span className="offline-hint">
-                Start Ollama with:<br />
-                <code>ollama run {settings.model}</code>
-              </span>
-            )}
           </div>
         )}
 
@@ -121,13 +112,13 @@ export default function ChatBubble({
         <div ref={endRef} />
       </div>
 
-      {/* ── Input ─────────────────────────────────────────────── */}
+      {/* ── Input ────────────────────────────────────────────────────── */}
       <div className="input-row">
         <textarea
           ref={inputRef}
           className="chat-input"
           rows={1}
-          placeholder={streaming ? 'Generating…' : 'Ask me anything… (Enter to send)'}
+          placeholder={streaming ? 'Thinking…' : 'Type a message… (Enter to send)'}
           value={input}
           disabled={streaming && input === ''}
           onChange={e => setInput(e.target.value)}
@@ -139,13 +130,12 @@ export default function ChatBubble({
           <button
             className="send-btn"
             onClick={submit}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isOffline}
             title="Send (Enter)"
           >▶</button>
         )}
       </div>
 
-      {/* Bubble tail pointing to pet */}
       <div className="bubble-tail" />
     </div>
   )
