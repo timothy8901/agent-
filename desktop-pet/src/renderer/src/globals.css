@@ -698,3 +698,93 @@ html, body, #root {
 .si-ctrl-btn:active { background: rgba(0,255,0,0.2); transform: scale(0.94); }
 .si-fire-btn { width: 90px; background: rgba(255,68,0,0.12); border-color: rgba(255,68,0,0.35); color: #ff6622; }
 .si-fire-btn:active { background: rgba(255,68,0,0.28); }
+
+/* ── Accessibility overrides (larger text, higher contrast) ──────────── */
+/* These override earlier rules for improved readability */
+
+.chat-bubble,
+.custom-panel,
+.games-panel,
+.vision-panel,
+.settings-panel {
+  color: #f0f0f0;
+}
+
+/* Bigger panel titles */
+.panel-title { font-size: 15px !important; font-weight: 700 !important; color: #fff !important; }
+
+/* Larger status pill */
+.status-pill { font-size: 13px !important; color: #ccc !important; }
+.status-label { font-size: 13px !important; }
+
+/* Larger icon buttons */
+.icon-btn { font-size: 16px !important; width: 28px !important; height: 28px !important; color: #bbb !important; }
+.icon-btn:hover { color: #fff !important; }
+
+/* Bigger pet name label */
+.pet-name-btn  { font-size: 14px !important; color: rgba(255,255,255,0.9) !important; }
+.pet-name-input { font-size: 14px !important; }
+
+/* Larger toolbar icons */
+.tool-icon { font-size: 19px !important; }
+.tool-btn  { width: 40px !important; height: 38px !important; }
+
+/* Chat messages — bigger, more readable */
+.message.user .message-content      { font-size: 15px !important; line-height: 1.6 !important; padding: 10px 14px !important; }
+.message.assistant .message-content { font-size: 15px !important; line-height: 1.7 !important; padding: 10px 14px !important; color: #f0f0f0 !important; }
+
+/* Empty state bigger */
+.empty-state { font-size: 16px !important; color: #bbb !important; }
+
+/* Chat input bigger */
+.chat-input { font-size: 15px !important; padding: 10px 14px !important; color: #f0f0f0 !important; }
+.chat-input::placeholder { color: #777 !important; }
+.send-btn { width: 40px !important; height: 40px !important; font-size: 16px !important; }
+
+/* Markdown larger */
+.markdown p      { font-size: 15px !important; margin-bottom: 8px !important; }
+.markdown h1     { font-size: 18px !important; }
+.markdown h2     { font-size: 16px !important; }
+.markdown h3     { font-size: 15px !important; }
+.markdown strong { color: #ffffff !important; }
+.markdown li     { font-size: 15px !important; margin: 4px 0 !important; }
+.inline-code     { font-size: 13px !important; }
+.code-block      { font-size: 13px !important; }
+
+/* Customization panel bigger labels */
+.color-name, .option-chip { font-size: 13px !important; }
+.swatch { width: 30px !important; height: 30px !important; }
+
+/* Game cards bigger */
+.game-card-title { font-size: 16px !important; }
+.game-card-desc  { font-size: 13px !important; }
+
+/* Settings bigger */
+.settings-label { font-size: 14px !important; }
+.settings-input, .settings-select, .settings-textarea { font-size: 14px !important; padding: 9px 11px !important; }
+
+/* ── Onboarding banner ───────────────────────────────────────────────── */
+.onboarding-banner {
+  background: rgba(255,112,67,0.08);
+  border-bottom: 1px solid rgba(255,112,67,0.2);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  flex-shrink: 0;
+}
+.onboard-title {
+  font-size: 16px; font-weight: 700; color: #fff; margin: 0;
+}
+.onboard-step {
+  font-size: 14px; color: #e0e0e0; margin: 0; line-height: 1.5;
+}
+.onboard-step strong { color: #FF8A65; }
+.onboard-code {
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,112,67,0.3);
+  border-radius: 8px; padding: 8px 12px;
+  font-family: 'Fira Code','Courier New',monospace;
+  font-size: 14px; color: #FFAB91;
+  letter-spacing: 0.03em;
+}
+.onboard-hint {
+  font-size: 12px; color: #888; margin: 0;
+}
