@@ -14,17 +14,20 @@ jobs:
           - os: macos-latest
             platform: mac
             artifact: "*.dmg"
+            working_dir: desktop-pet
           - os: windows-latest
             platform: win
             artifact: "*.exe"
+            working_dir: desktop-pet-windows
           - os: ubuntu-latest
             platform: linux
             artifact: "*.AppImage"
+            working_dir: desktop-pet
 
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: desktop-pet
+        working-directory: ${{ matrix.working_dir }}
 
     steps:
       - name: Checkout
@@ -35,7 +38,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: desktop-pet/package-lock.json
+          cache-dependency-path: ${{ matrix.working_dir }}/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -66,7 +69,7 @@ jobs:
         with:
           name: desktop-pet-${{ matrix.platform }}
           path: |
-            desktop-pet/dist/${{ matrix.artifact }}
+            ${{ matrix.working_dir }}/dist/${{ matrix.artifact }}
           if-no-files-found: error
 
   release:
@@ -100,7 +103,7 @@ jobs:
 
             ### Setup
             1. Install [Ollama](https://ollama.com)
-            2. Run `ollama pull qwen2.5:3b`
+            2. Run `ollama pull qwen3:latest`
             3. Install Desktop Pet
             4. Click the pet to start chatting!
           files: artifacts/**/*
