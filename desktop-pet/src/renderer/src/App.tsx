@@ -4,6 +4,7 @@ import ChatBubble         from './components/ChatBubble'
 import SettingsPanel      from './components/SettingsPanel'
 import CustomizationPanel from './components/CustomizationPanel'
 import GamesPanel         from './components/GamesPanel'
+import ScreenPanel        from './components/ScreenPanel'
 import { useOllama }      from './hooks/useOllama'
 import { usePetAppearance } from './hooks/usePetAppearance'
 import { useVision }      from './hooks/useVision'
@@ -25,7 +26,7 @@ declare global {
   }
 }
 
-type Panel = null | 'chat' | 'customize' | 'games' | 'vision'
+type Panel = null | 'chat' | 'customize' | 'games' | 'vision' | 'screen'
 
 const SCREEN_REACTIONS: Record<ScreenContextType, { anim: PetAnim; msg: string } | null> = {
   video:   { anim: 'EATING',   msg: "Ooh, what are we watching? 🍿 Scoot over!" },
@@ -86,13 +87,7 @@ export default function App() {
   }, [messages, streaming, voice.state.ttsEnabled])
 
   // ── Screen context ─────────────────────────────────────────────────────
-  const [screenWatching, setScreenWatching] = useState(false)
   const screenCtx = useScreenContext(settings.baseUrl)
-
-  useEffect(() => {
-    if (screenWatching) screenCtx.start()
-    else screenCtx.stop()
-  }, [screenWatching])
 
   // React when screen context changes
   useEffect(() => {
@@ -100,7 +95,6 @@ export default function App() {
     if (!reaction || !screenCtx.state.active) return
     setPetAnim(reaction.anim)
     setTimeout(() => setPetAnim('IDLE'), 4000)
-    // Inject as chat message (will auto-send to LLM if chat open)
     if (panel === 'chat') send(`[Screen]: ${reaction.msg}`)
   }, [screenCtx.state.context])
 
@@ -192,6 +186,7 @@ export default function App() {
     customize: panel === 'customize',
     games:     panel === 'games',
     vision:    panel === 'vision',
+    screen:    panel === 'screen',
   }
 
   return (
@@ -233,6 +228,15 @@ export default function App() {
             <VisionPanel
               vision={vision} petName={petName}
               onAnalyze={() => analyzeFrame(petName)}
+              onClose={() => setPanel(null)}
+            />
+          )}
+          {panel === 'screen' && (
+            <ScreenPanel
+              state={screenCtx.state}
+              petName={petName}
+              onEnable={screenCtx.setupAndStart}
+              onDisable={screenCtx.stop}
               onClose={() => setPanel(null)}
             />
           )}
@@ -300,9 +304,9 @@ export default function App() {
           />
           <ToolBtn
             icon="🖥" label="Screen"
-            active={screenWatching}
-            onClick={() => setScreenWatching(w => !w)}
-            dot={screenWatching}
+            active={activeToolbar.screen}
+            onClick={() => togglePanel('screen')}
+            dot={screenCtx.state.active}
             loading={screenCtx.state.isAnalyzing}
           />
         </div>

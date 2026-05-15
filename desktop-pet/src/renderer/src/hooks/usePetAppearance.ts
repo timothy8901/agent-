@@ -19,7 +19,7 @@ function load(): PetAppearance {
 }
 
 function loadName(): string {
-  return localStorage.getItem(STORAGE_NAME) ?? 'Igachi'
+  return localStorage.getItem(STORAGE_NAME) ?? 'Patti'
 }
 
 export const COLOR_NAMES = ['Ember', 'Ocean', 'Forest', 'Cosmic', 'Cherry']
