@@ -78,7 +78,7 @@ Click **⚙** inside the chat bubble:
 |---------|---------|-------|
 | Ollama URL | `http://localhost:11434` | Change if Ollama runs on a remote machine |
 | Model | `qwen2.5:3b` | Any model installed in Ollama works |
-| System prompt | Igachi persona | Customize the pet's personality |
+| System prompt | Patti persona | Customize the pet's personality |
 
 The app auto-detects installed models from Ollama and shows them as clickable chips.
 

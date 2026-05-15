@@ -1,9 +1,9 @@
-import { app, BrowserWindow, ipcMain, Menu, screen, shell } from 'electron'
+import { app, BrowserWindow, desktopCapturer, ipcMain, Menu, screen, shell } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 
 // ── Window dimensions ──────────────────────────────────────────────────────
-const COLLAPSED = { width: 180, height: 228 }
+const COLLAPSED = { width: 215, height: 228 }
 const EXPANDED  = { width: 440, height: 660 }
 
 let win: BrowserWindow | null = null
@@ -104,6 +104,17 @@ ipcMain.on('drag-end', () => {
   if (!win) return
   const [x, y] = win.getPosition()
   savePos(x, y)
+})
+
+// Screen capture — returns primary display thumbnail as data URL
+ipcMain.handle('capture-screen', async () => {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: 640, height: 400 }
+    })
+    return sources[0]?.thumbnail.toDataURL() ?? null
+  } catch { return null }
 })
 
 // Context menu
