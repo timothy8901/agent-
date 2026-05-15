@@ -58,7 +58,7 @@ export function usePetAppearance() {
   }, [])
 
   const setPetName = useCallback((name: string) => {
-    const trimmed = name.trim().slice(0, 20) || 'Igachi'
+    const trimmed = name.trim().slice(0, 20) || 'Patti'
     localStorage.setItem(STORAGE_NAME, trimmed)
     setPetNameState(trimmed)
   }, [])

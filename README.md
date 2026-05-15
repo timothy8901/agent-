@@ -1,4 +1,4 @@
-# 🐾 Claude-Igachi
+# 🐾 Patti
 
 A native Android Tamagotchi-style virtual pet powered by **Claude AI** for realistic, personality-driven interactions.
 
@@ -111,7 +111,7 @@ Or in Android Studio: **Run -> Run 'app'** with your Pixel connected.
 ## Project Structure
 
 ```
-app/src/main/java/com/claudeigachi/
+app/src/main/java/com/patti/
 ├── data/
 │   ├── model/          Pet.kt, PetStage, PetMood, PetAnimation
 │   ├── database/       Room entities, DAOs, PetDatabase
