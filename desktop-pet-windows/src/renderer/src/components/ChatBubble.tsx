@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, KeyboardEvent, ChangeEvent } from 'react'
 import type { Message, OllamaSettings } from '../hooks/useOllama'
 
 interface Props {
@@ -26,9 +26,11 @@ export default function ChatBubble({
   onSend, onStop, onClose, onClearHistory, onOpenSettings, settings,
   listening, speaking, voiceSupported, ttsEnabled, onMicDown, onMicUp, onToggleTts,
 }: Props) {
-  const [input, setInput] = useState('')
-  const endRef   = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [input,   setInput]   = useState('')
+  const [fileCtx, setFileCtx] = useState<{ name: string; content: string } | null>(null)
+  const endRef      = useRef<HTMLDivElement>(null)
+  const inputRef    = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => { if (!listening) inputRef.current?.focus() }, [listening])
@@ -36,11 +38,30 @@ export default function ChatBubble({
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() }
   }
+
   function submit() {
-    const text = input.trim()
-    if (!text || streaming) return
+    let text = input.trim()
+    if (!text && !fileCtx) return
+    if (streaming) return
+    if (fileCtx) {
+      text = `[File: ${fileCtx.name}]\n\`\`\`\n${fileCtx.content}\n\`\`\`\n\n${text}`
+      setFileCtx(null)
+    }
     setInput('')
     onSend(text)
+  }
+
+  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      let text = reader.result as string
+      if (text.length > 3000) text = text.slice(0, 3000) + '\n[…file truncated at 3000 chars]'
+      setFileCtx({ name: file.name, content: text })
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   // Minimal markdown → HTML
@@ -129,8 +150,38 @@ export default function ChatBubble({
         <div ref={endRef} />
       </div>
 
+      {/* ── File chip (shown when a file is attached) ────────────────── */}
+      {fileCtx && (
+        <div className="file-chip-row">
+          <div className="file-chip">
+            <span className="file-chip-icon">📄</span>
+            <span className="file-chip-name">{fileCtx.name}</span>
+            <button className="file-chip-remove" onClick={() => setFileCtx(null)} title="Remove file">✕</button>
+          </div>
+        </div>
+      )}
+
       {/* ── Input row ────────────────────────────────────────────────── */}
       <div className="input-row">
+        {/* Hidden file picker */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".txt,.md,.csv,.json,.log"
+          style={{ display: 'none' }}
+          onChange={onFileChange}
+        />
+
+        {/* Attach button */}
+        <button
+          className={`attach-btn ${fileCtx ? 'has-file' : ''}`}
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach a text file"
+          disabled={streaming}
+        >
+          📎
+        </button>
+
         {/* Mic button */}
         {voiceSupported && (
           <button
@@ -150,8 +201,9 @@ export default function ChatBubble({
           className="chat-input"
           rows={1}
           placeholder={
-            listening ? 'Listening… release to send'
+            listening  ? 'Listening… release to send'
             : streaming ? 'Thinking…'
+            : fileCtx   ? 'Add a message for the file… (Enter to send)'
             : 'Type a message… (Enter to send)'
           }
           value={input}
@@ -166,7 +218,7 @@ export default function ChatBubble({
           <button
             className="send-btn"
             onClick={submit}
-            disabled={!input.trim() || isOffline}
+            disabled={(!input.trim() && !fileCtx) || isOffline}
             title="Send (Enter)"
           >▶</button>
         )}

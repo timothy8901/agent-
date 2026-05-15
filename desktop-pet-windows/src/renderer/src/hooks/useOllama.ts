@@ -104,6 +104,11 @@ export function useOllama() {
     abortRef.current = new AbortController()
 
     try {
+      const memory = localStorage.getItem('pet-memory') ?? ''
+      const fullSystem = memory
+        ? `${settings.systemPrompt}\n\n=== Personal Context ===\n${memory}`
+        : settings.systemPrompt
+
       const response = await fetch(`${settings.baseUrl}/api/chat`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,7 +116,7 @@ export function useOllama() {
         body: JSON.stringify({
           model:    settings.model,
           messages: [
-            { role: 'system', content: settings.systemPrompt },
+            { role: 'system', content: fullSystem },
             ...nextHistory.slice(-20)  // send last 20 turns for context
           ],
           stream: true,
