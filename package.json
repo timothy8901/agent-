@@ -1,0 +1,61 @@
+{
+  "name": "desktop-pet-patti",
+  "version": "3.0.0",
+  "description": "Desktop Pet Patti — a macOS desktop pet that chats, sees your screen, runs local LLMs, and helps with your calendar, alarms, and files.",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "package": "npm run build && electron-builder",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/utils": "^3.0.0",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.0",
+    "electron-vite": "^2.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  },
+  "build": {
+    "appId": "com.patti.desktop-pet",
+    "productName": "Desktop Pet Patti",
+    "copyright": "Copyright © 2025",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [],
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCalendarsUsageDescription": "Patti uses Calendar to read your upcoming events and create new ones when you ask.",
+        "NSScreenCaptureUsageDescription": "Patti looks at your screen so she can react to what you're working on (videos, code, games).",
+        "NSAppleEventsUsageDescription": "Patti uses AppleScript to talk to Calendar on your behalf.",
+        "NSMicrophoneUsageDescription": "Patti can listen for voice input when you tap the microphone button.",
+        "LSUIElement": false
+      }
+    },
+    "dmg": {
+      "title": "Desktop Pet Patti",
+      "window": { "width": 540, "height": 380 }
+    }
+  }
+}
