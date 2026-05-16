@@ -1,127 +1,111 @@
-# 🐾 Patti
+# Desktop Pet Patti
 
-A native Android Tamagotchi-style virtual pet powered by **Claude AI** for realistic, personality-driven interactions.
+A tiny pet that lives in the corner of your Mac, runs entirely on-device, and can actually help with things — your calendar, reminders, finding files, and reacting to what's on your screen.
 
----
-
-## Features
-
-### Classic Tamagotchi Mechanics
-- **6 life stages**: Egg → Baby → Child → Teen → Adult → Elder
-- **5 stats**: Hunger, Happiness, Health, Energy, Cleanliness
-- **Actions**: Feed, Play, Sleep/Wake, Clean, Heal with medicine
-- **Real-time decay**: Stats decrease over time, even while the app is closed (WorkManager)
-- **Poop mechanic**: Your pet poops every ~90 minutes — clean it up or health suffers
-- **Sickness**: Neglect causes illness; use medicine to heal
-- **Death**: If you neglect your pet too long, it passes away
-- **Background notifications**: Get alerted when your pet needs urgent care
-- **Animations**: Idle bob, eating, playing (bounce), sleeping (Zzz), sick (shake), dead, and more
-
-### AI-Powered Chat (Claude API)
-- Tap **Talk** to open a full chat screen
-- Your pet responds in character based on its **current mood, stats, and life stage**
-- Personality evolves naturally through conversations
-- Baby pets speak simply; elders speak with wisdom; teens have attitude
-- Responses reflect hunger, sickness, happiness, etc. in real-time
-
-### Visual Design
-- Pixel-art style creatures drawn entirely in **Compose Canvas** — no image files needed
-- Each life stage has a unique body shape, color palette, and features
-- Dynamic mood indicators (blush when happy, green tint when sick, X eyes when dead)
-- Animated stat bars, action button pulse for sick state, poop badges
+> macOS only. Everything (the LLM, the vision model, your chat history) stays on your laptop.
 
 ---
 
-## Building the APK
+## Install
 
-### Prerequisites
-- **Android Studio** Iguana (2023.2.1) or newer
-- **JDK 17+**
-- Android SDK with API 34
+1. Download **Desktop Pet Patti.dmg** from the [Releases page](https://github.com/timothy8901/agent-/releases).
+2. Open the `.dmg` and drag **Desktop Pet Patti** to **Applications**.
+3. Double-click it. macOS will say it's from an unidentified developer — open **System Settings → Privacy & Security → Open Anyway**.
+4. On first launch, Patti's welcome wizard will:
+   - Install Ollama for you (~200 MB)
+   - Download the chat model `qwen3:4b` (~2.5 GB)
+   - Download the vision model `moondream` (~1.7 GB)
+   That's it. Click "Set me up" and walk away — it takes 5–10 minutes on a decent connection.
 
-### Steps
+You'll be asked for three macOS permissions over time:
+
+- **Screen Recording** — so Patti can react to what you're working on
+- **Calendar** — so Patti can read and add events
+- **Notifications** — so reminders actually fire
+
+---
+
+## What Patti does
+
+| | |
+|---|---|
+| 💬 **Chat** | Streamed local LLM. Click Patti to open the chat bubble. |
+| 👁 **Vision** | Patti glances at your screen every minute and reacts — "scoot over!" for video, quiet mode for code, hype mode for games. |
+| 📅 **Calendar** | "What's on my schedule this week?" / "Add a dentist appointment Thursday at 3pm." |
+| ⏰ **Reminders** | "Remind me to stretch in 25 minutes." Fires a real macOS notification. |
+| 🔎 **File finder** | "Find the PDF about taxes I downloaded last week." Searches via Spotlight. |
+| 🎮 **Games** | Rock-Paper-Scissors, Catch, Space Invaders. |
+| 🎨 **Customization** | Colors, faces, ears, name. Click ✏️ to rename her. |
+| 🎙 **Voice** | Hold the mic to dictate. Toggle 🔊 to have her speak replies. |
+
+---
+
+## Build from source
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/timothy8901/agent-
-cd agent-
+git clone https://github.com/timothy8901/agent-.git desktop-pet-patti
+cd desktop-pet-patti
+npm install
 
-# 2. Open in Android Studio
-# File -> Open -> select this folder
+# Run in dev (live reload)
+npm run dev
 
-# 3. Build debug APK
-./gradlew assembleDebug
-
-# APK will be at:
-# app/build/outputs/apk/debug/app-debug.apk
+# Produce a .dmg
+npm run package
+# → dist/Desktop Pet Patti-3.0.0-arm64.dmg
 ```
 
-### Install on Google Pixel
-
-```bash
-# Enable Developer Options + USB Debugging on your Pixel
-# Connect via USB
-
-adb install app/build/outputs/apk/debug/app-debug.apk
-```
-
-Or in Android Studio: **Run -> Run 'app'** with your Pixel connected.
+Or just double-click `INSTALL.command` in Finder — it does the same thing.
 
 ---
 
-## Setup
-
-1. **Launch the app** - your egg will hatch into a baby after 1 hour
-2. **Tap Settings** (gear icon) -> enter your **Anthropic API key**
-   - Get one free at console.anthropic.com
-3. **Tap Talk** to start chatting with your pet via Claude AI
-4. **Keep your pet alive** by feeding, playing, cleaning, and healing it regularly
-
----
-
-## Gameplay Tips
-
-| Stat        | Depletes   | Action    |
-|-------------|------------|-----------|
-| Hunger      | ~0.8/min   | Feed      |
-| Happiness   | ~0.6/min   | Play      |
-| Energy      | ~0.5/min   | Sleep     |
-| Cleanliness | ~0.3/min   | Clean     |
-| Health      | When sick  | Heal      |
-
-- **Sleep** restores energy (pet won't respond to actions while sleeping)
-- **Overfeeding** increases weight; playing reduces it
-- **Poop** appears every ~90 min and slowly drains cleanliness — clean it fast!
-- Pet dies if health reaches 0 or hunger stays at 0 for over an hour
-
----
-
-## Tech Stack
-
-- **Kotlin** + **Jetpack Compose** (UI)
-- **Room** (pet state persistence)
-- **WorkManager** (background decay every 15 min)
-- **DataStore** (API key + settings)
-- **OkHttp** + **Gson** (Claude API calls)
-- **Anthropic Claude claude-sonnet-4-6** (AI pet personality)
-- **Compose Canvas** (all pet animations, no image assets needed)
-
----
-
-## Project Structure
+## Architecture
 
 ```
-app/src/main/java/com/patti/
-├── data/
-│   ├── model/          Pet.kt, PetStage, PetMood, PetAnimation
-│   ├── database/       Room entities, DAOs, PetDatabase
-│   ├── repository/     PetRepository (game logic + API)
-│   └── api/            ClaudeApiClient (Anthropic Messages API)
-├── presentation/
-│   ├── theme/          Material3 theme (light + dark)
-│   ├── viewmodel/      PetViewModel (state management)
-│   ├── navigation/     NavGraph
-│   ├── screens/        MainScreen, ChatScreen, SettingsScreen
-│   └── components/     PetCanvas, StatBars, ActionButtons
-└── worker/             PetDecayWorker, BootReceiver
+src/
+├── main/
+│   ├── index.ts            Electron main — overlay window, IPC, screen capture
+│   ├── installOllama.ts    First-run Ollama installer (DMG → /Applications)
+│   ├── toolRouter.ts       Dispatches LLM tool calls to the modules below
+│   └── tools/
+│       ├── calendar.ts     macOS Calendar via osascript
+│       ├── alarms.ts       Persisted reminders + Electron notifications
+│       └── fileFinder.ts   Spotlight (mdfind) search of $HOME
+├── preload/
+│   └── index.ts            contextBridge: drag, screen capture, tools, install
+├── shared/
+│   ├── tools.ts            Tool catalog (Ollama function-calling schema)
+│   └── installTypes.ts     Install progress types shared by main + renderer
+└── renderer/src/
+    ├── App.tsx                Pet, toolbar, panels, first-run wizard wiring
+    ├── components/
+    │   ├── PetCanvas.tsx      Procedural canvas animations
+    │   ├── ChatBubble.tsx     Streaming chat + inline tool-call status
+    │   ├── WelcomePanel.tsx   First-run wizard (install Ollama + pull models)
+    │   ├── AlarmsPanel.tsx    Pending reminders list
+    │   ├── ScreenPanel.tsx    Vision setup + status
+    │   ├── CustomizationPanel.tsx
+    │   ├── GamesPanel.tsx + games/{RockPaperScissors,CatchGame,SpaceInvaders}.tsx
+    │   └── SettingsPanel.tsx
+    ├── hooks/
+    │   ├── useOllama.ts        Streaming chat + tool-calling loop
+    │   ├── useScreenContext.ts Screen capture → moondream → classify
+    │   ├── useVoice.ts         Web Speech API (mic + TTS)
+    │   └── usePetAppearance.ts Color/face/ear/name state
+    └── lib/
+        └── ollamaPull.ts       Shared streaming model pull
 ```
+
+---
+
+## Privacy
+
+- The LLM (`qwen3:4b`) and vision model (`moondream`) run locally via Ollama.
+- Patti never makes outbound network calls except: (a) the first-time download of Ollama and models, (b) the Ollama daemon at `localhost:11434`.
+- Chat history, reminders, and your pet's customization are stored in `~/Library/Application Support/Desktop Pet Patti/` as plain JSON.
+
+---
+
+## License
+
+MIT.
