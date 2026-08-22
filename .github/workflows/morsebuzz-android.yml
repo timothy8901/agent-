@@ -1,0 +1,42 @@
+name: MorseBuzz Android
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+    paths:
+      - "morsebuzz/**"
+      - ".github/workflows/morsebuzz-android.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: morsebuzz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Encoder unit tests
+        run: ./gradlew :morse:test
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: morsebuzz-debug-apk
+          path: morsebuzz/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: morse-test-results
+          path: morsebuzz/morse/build/reports/tests/test/
