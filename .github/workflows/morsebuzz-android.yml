@@ -8,6 +8,9 @@ on:
       - ".github/workflows/morsebuzz-android.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,6 +36,17 @@ jobs:
         with:
           name: morsebuzz-debug-apk
           path: morsebuzz/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish APK to the morsebuzz-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk MorseBuzz.apk
+          gh release create morsebuzz-latest \
+            --title "MorseBuzz (latest debug build)" \
+            --notes "Debug-signed APK, rebuilt on every push. Download MorseBuzz.apk on your phone and install it." \
+            || true
+          gh release upload morsebuzz-latest MorseBuzz.apk --clobber
 
       - name: Upload test results
         if: always()
