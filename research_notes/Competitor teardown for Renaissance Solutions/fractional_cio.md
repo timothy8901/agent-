@@ -669,7 +669,7 @@ Everything below is my recommendation for RS, not a sourced fact.
 
 **(c) Where RS can win**
 - Organizations under $10M revenue, which are below Fluent's floor.
-- Governance and training depth: Fluent builds agents but shows no governance or literacy offer.
+- Governance and training depth: Fluent builds agents, and the pages and snippets reviewed showed no governance or literacy offer.
 - In-person presence in NW Cook County.
 
 **(d) Threat: LOW.**
