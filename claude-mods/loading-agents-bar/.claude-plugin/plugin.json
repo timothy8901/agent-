@@ -1,0 +1,6 @@
+{
+  "name": "loading-agents-bar",
+  "version": "0.1.0",
+  "description": "Stacked loading bars above the prompt, one color bar per working agent; toggle with /loading-agents-bar",
+  "types": "./types/index.d.ts"
+}
